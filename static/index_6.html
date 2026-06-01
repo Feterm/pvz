@@ -1,0 +1,1784 @@
+<!DOCTYPE html><html lang="ru"><head>
+ <meta charset="UTF-8">
+ <title>ПВЗ-Контроль | Система управления</title>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+ <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+ <style>
+ :root {
+ --primary: #2563eb;
+ --success: #22c55e;
+ --warning: #f59e0b;
+ --danger: #ef4444;
+ --dark: #0f172a;
+ --dark2: #1e293b;
+ --dark3: #334155;
+ --muted: #64748b;
+ --light: #f1f5f9;
+ --white: #ffffff;
+ --border: #e2e8f0;
+ --role-op: #7c3aed;
+ --role-sv: #0891b2;
+ --role-an: #059669;
+ }
+
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+
+ body {
+ font-family: 'Manrope', sans-serif;
+ background: var(--light);
+ color: var(--dark);
+ height: 100vh;
+ overflow: hidden;
+ }
+
+ /* ══════════════════════════════════════════════════
+ ЭКРАН ВХОДА
+ ══════════════════════════════════════════════════ */
+ #login-screen {
+ position: fixed;
+ inset: 0;
+ background: var(--dark);
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ z-index: 1000;
+ }
+
+ .login-box {
+ background: var(--dark2);
+ border: 1px solid rgba(255,255,255,0.08);
+ border-radius: 20px;
+ padding: 44px 48px;
+ width: 420px;
+ box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+ }
+
+ .login-logo {
+ font-family: 'JetBrains Mono', monospace;
+ font-size: 1.3rem;
+ font-weight: 700;
+ color: var(--white);
+ margin-bottom: 6px;
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ }
+
+ .login-logo span {
+ background: var(--primary);
+ color: white;
+ font-size: 0.65rem;
+ padding: 3px 8px;
+ border-radius: 6px;
+ letter-spacing: 0.08em;
+ }
+
+ .login-sub {
+ color: rgba(255,255,255,0.35);
+ font-size: 0.82rem;
+ margin-bottom: 36px;
+ }
+
+ .login-label {
+ font-size: 0.72rem;
+ font-weight: 700;
+ text-transform: uppercase;
+ letter-spacing: 0.08em;
+ color: rgba(255,255,255,0.4);
+ margin-bottom: 7px;
+ }
+
+ .login-input {
+ width: 100%;
+ background: rgba(255,255,255,0.05);
+ border: 1px solid rgba(255,255,255,0.1);
+ border-radius: 10px;
+ padding: 12px 16px;
+ color: white;
+ font-size: 0.92rem;
+ font-family: 'Manrope', sans-serif;
+ margin-bottom: 18px;
+ transition: border-color 0.2s;
+ outline: none;
+ }
+
+ .login-input:focus {
+ border-color: var(--primary);
+ background: rgba(37,99,235,0.08);
+ }
+
+ .login-btn {
+ width: 100%;
+ background: var(--primary);
+ color: white;
+ border: none;
+ border-radius: 10px;
+ padding: 13px;
+ font-size: 0.92rem;
+ font-weight: 700;
+ font-family: 'Manrope', sans-serif;
+ cursor: pointer;
+ transition: background 0.2s, transform 0.1s;
+ margin-top: 4px;
+ }
+
+ .login-btn:hover { background: #1d4ed8; }
+ .login-btn:active { transform: scale(0.98); }
+
+ .login-error {
+ color: #f87171;
+ font-size: 0.8rem;
+ margin-top: 12px;
+ min-height: 18px;
+ text-align: center;
+ }
+
+ .login-hint {
+ margin-top: 28px;
+ padding-top: 22px;
+ border-top: 1px solid rgba(255,255,255,0.07);
+ }
+
+ .login-hint-title {
+ font-size: 0.68rem;
+ text-transform: uppercase;
+ letter-spacing: 0.08em;
+ color: rgba(255,255,255,0.2);
+ margin-bottom: 10px;
+ }
+
+ .hint-row {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom: 6px;
+ }
+
+ .hint-role {
+ font-size: 0.72rem;
+ font-family: 'JetBrains Mono', monospace;
+ color: rgba(255,255,255,0.45);
+ }
+
+ .hint-cred {
+ font-size: 0.7rem;
+ font-family: 'JetBrains Mono', monospace;
+ color: rgba(255,255,255,0.25);
+ background: rgba(255,255,255,0.05);
+ padding: 2px 8px;
+ border-radius: 5px;
+ cursor: pointer;
+ transition: background 0.15s;
+ }
+
+ .hint-cred:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+
+ /* ══════════════════════════════════════════════════
+ ОСНОВНОЙ ДАШБОРД
+ ══════════════════════════════════════════════════ */
+ #app {
+ display: none;
+ height: 100vh;
+ flex-direction: row;
+ }
+
+ #app.visible { display: flex; }
+
+ /* ─── Сайдбар ─── */
+ aside {
+ width: 270px;
+ min-width: 270px;
+ background: var(--dark2);
+ color: white;
+ display: flex;
+ flex-direction: column;
+ padding: 18px;
+ overflow-y: auto;
+ }
+
+ .aside-top {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ margin-bottom: 14px;
+ }
+
+ .aside-logo {
+ font-family: 'JetBrains Mono', monospace;
+ font-size: 0.95rem;
+ font-weight: 700;
+ }
+
+ .status-dot {
+ width: 8px; height: 8px;
+ border-radius: 50%;
+ background: var(--success);
+ box-shadow: 0 0 6px var(--success);
+ animation: blink 2s infinite;
+ }
+
+ @keyframes blink {
+ 0%,100% { opacity: 1; }
+ 50% { opacity: 0.4; }
+ }
+
+ /* Карточка пользователя */
+ .user-card {
+ background: rgba(255,255,255,0.05);
+ border: 1px solid rgba(255,255,255,0.08);
+ border-radius: 12px;
+ padding: 12px 14px;
+ margin-bottom: 18px;
+ }
+
+ .user-name {
+ font-size: 0.85rem;
+ font-weight: 700;
+ margin-bottom: 4px;
+ }
+
+ .role-badge {
+ display: inline-flex;
+ align-items: center;
+ gap: 5px;
+ font-size: 0.68rem;
+ font-weight: 700;
+ text-transform: uppercase;
+ letter-spacing: 0.07em;
+ padding: 3px 9px;
+ border-radius: 6px;
+ margin-bottom: 6px;
+ }
+
+ .role-badge.operator { background: rgba(124,58,237,0.2); color: #a78bfa; }
+ .role-badge.supervisor { background: rgba(8,145,178,0.2); color: #67e8f9; }
+ .role-badge.analyst { background: rgba(5,150,105,0.2); color: #6ee7b7; }
+
+ .user-scope {
+ font-size: 0.7rem;
+ color: rgba(255,255,255,0.35);
+ line-height: 1.4;
+ }
+
+ .logout-btn {
+ width: 100%;
+ background: transparent;
+ border: 1px solid rgba(255,255,255,0.1);
+ border-radius: 8px;
+ color: rgba(255,255,255,0.45);
+ padding: 7px;
+ font-size: 0.75rem;
+ font-family: 'Manrope', sans-serif;
+ cursor: pointer;
+ transition: 0.2s;
+ margin-top: 8px;
+ }
+
+ .logout-btn:hover {
+ border-color: var(--danger);
+ color: #f87171;
+ }
+
+ .pvz-section-label {
+ font-size: 0.62rem;
+ text-transform: uppercase;
+ letter-spacing: 0.1em;
+ color: rgba(255,255,255,0.25);
+ margin-bottom: 8px;
+ }
+
+ .nav-item {
+ padding: 9px 12px;
+ border-radius: 10px;
+ cursor: pointer;
+ margin-bottom: 4px;
+ transition: 0.2s;
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ }
+
+ .nav-item:hover { background: rgba(255,255,255,0.07); }
+ .nav-item.active { background: var(--primary); }
+
+ .nav-item-name {
+ font-size: 0.78rem;
+ font-weight: 600;
+ white-space: nowrap;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ max-width: 160px;
+ }
+
+ .nav-item-sub {
+ font-size: 0.65rem;
+ color: rgba(255,255,255,0.4);
+ margin-top: 2px;
+ }
+
+ .load-badge {
+ font-size: 0.68rem;
+ font-weight: 700;
+ padding: 2px 7px;
+ border-radius: 6px;
+ white-space: nowrap;
+ flex-shrink: 0;
+ }
+
+ .load-badge.green { background: rgba(34,197,94,0.15); color: #4ade80; }
+ .load-badge.yellow { background: rgba(245,158,11,0.15); color: #fbbf24; }
+ .load-badge.red { background: rgba(239,68,68,0.15); color: #f87171; }
+
+ .aside-footer {
+ margin-top: auto;
+ padding-top: 14px;
+ border-top: 1px solid rgba(255,255,255,0.07);
+ font-size: 0.68rem;
+ color: rgba(255,255,255,0.2);
+ font-family: 'JetBrains Mono', monospace;
+ }
+
+ /* ─── Основной контент ─── */
+ main {
+ flex: 1;
+ min-width: 0;
+ display: flex;
+ flex-direction: column;
+ overflow-y: auto;
+ }
+
+ header {
+ background: var(--white);
+ padding: 12px 22px;
+ border-bottom: 1px solid var(--border);
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ gap: 20px;
+ flex-shrink: 0;
+ }
+
+ .header-title {
+ font-size: 0.95rem;
+ font-weight: 700;
+ }
+
+ .header-sub {
+ font-size: 0.73rem;
+ color: var(--muted);
+ margin-top: 2px;
+ }
+
+ /* Табы */
+ .tabs {
+ display: inline-flex;
+ gap: 4px;
+ background: var(--light);
+ padding: 4px;
+ border-radius: 10px;
+ }
+
+ .tab-btn {
+ padding: 6px 14px;
+ border-radius: 7px;
+ border: 1px solid transparent;
+ background: transparent;
+ cursor: pointer;
+ font-weight: 700;
+ font-size: 0.78rem;
+ font-family: 'Manrope', sans-serif;
+ color: var(--dark3);
+ transition: 0.15s;
+ white-space: nowrap;
+ }
+
+ .tab-btn.active {
+ background: var(--white);
+ border-color: var(--border);
+ box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+ }
+
+ .tab-panel { display: none; }
+ .tab-panel.active { display: block; }
+
+ /* KPI карточки */
+ .stats-grid {
+ display: grid;
+ grid-template-columns: repeat(4, 1fr);
+ gap: 13px;
+ padding: 18px 22px 0;
+ }
+
+ .stat-card {
+ background: var(--white);
+ padding: 16px;
+ border-radius: 12px;
+ box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+ }
+
+ .stat-label { color: var(--muted); font-size: 0.74rem; font-weight: 600; }
+ .stat-val { font-size: 1.45rem; font-weight: 800; margin: 4px 0 2px; }
+ .stat-hint { font-size: 0.7rem; color: #94a3b8; }
+
+ /* Тепловая карта */
+ .content-section { padding: 14px 22px; }
+
+ .card {
+ background: var(--white);
+ border-radius: 12px;
+ padding: 16px;
+ box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+ }
+
+ .card-title {
+ font-size: 0.68rem;
+ font-weight: 700;
+ text-transform: uppercase;
+ letter-spacing: 0.08em;
+ color: #94a3b8;
+ margin-bottom: 14px;
+ }
+
+ .table-scroll { overflow-x: auto; }
+
+ table { width: max-content; min-width: 100%; border-collapse: collapse; }
+
+ th {
+ text-align: left;
+ padding: 5px 4px;
+ color: #94a3b8;
+ font-weight: 700;
+ font-size: 0.68rem;
+ text-transform: uppercase;
+ letter-spacing: 0.05em;
+ border-bottom: 2px solid var(--light);
+ white-space: nowrap;
+ }
+
+ td { padding: 5px 4px; border-bottom: 1px solid #f8fafc; }
+
+ .pvz-cell {
+ padding: 7px 10px;
+ font-weight: 700;
+ font-size: 0.8rem;
+ white-space: nowrap;
+ min-width: 140px;
+ max-width: 230px;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ }
+
+ .heat-cell {
+ width: 52px; height: 46px;
+ border-radius: 8px;
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ gap: 1px;
+ cursor: help;
+ transition: 0.2s;
+ }
+
+ .heat-cell:hover { filter: brightness(0.9); transform: scale(1.07); }
+ .heat-time { font-size: 0.58rem; font-weight: 500; opacity: 0.7; }
+ .heat-pct { font-size: 0.82rem; font-weight: 800; }
+
+ .lvl-low { background: #dcfce7; color: #166534; }
+ .lvl-mid { background: #fef9c3; color: #854d0e; }
+ .lvl-high { background: #fee2e2; color: #991b1b; animation: pulse 2s infinite; }
+
+ @keyframes pulse {
+ 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+ 50% { box-shadow: 0 0 0 6px rgba(239,68,68,0.2); }
+ }
+
+ /* Диаграммы */
+ .charts-grid {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 13px;
+ padding: 0 22px 16px;
+ }
+
+ .chart-card {
+ background: var(--white);
+ border-radius: 12px;
+ padding: 16px;
+ box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+ }
+
+ .chart-title {
+ font-size: 0.68rem;
+ font-weight: 700;
+ text-transform: uppercase;
+ letter-spacing: 0.07em;
+ color: #94a3b8;
+ margin-bottom: 12px;
+ }
+
+ .chart-wrap { position: relative; height: 190px; }
+
+ /* Экспорт */
+ .export-section { padding: 18px 22px; }
+
+ .export-card {
+ background: var(--white);
+ border-radius: 12px;
+ padding: 24px;
+ box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+ display: flex;
+ flex-direction: column;
+ gap: 18px;
+ }
+
+ .export-info {
+ border: 2px solid var(--border);
+ border-radius: 10px;
+ padding: 14px 18px;
+ background: var(--light);
+ }
+
+ .export-info-title { font-weight: 700; color: var(--dark3); margin-bottom: 6px; font-size: 0.9rem; }
+ .export-info-row { font-size: 0.82rem; color: var(--muted); margin-bottom: 3px; }
+
+ /* Баннер ограниченного доступа */
+ .access-banner {
+ background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(37,99,235,0.08));
+ border: 1px solid rgba(124,58,237,0.2);
+ border-radius: 10px;
+ padding: 12px 16px;
+ font-size: 0.82rem;
+ color: var(--dark3);
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ }
+
+ .access-banner.supervisor {
+ background: linear-gradient(135deg, rgba(8,145,178,0.08), rgba(37,99,235,0.08));
+ border-color: rgba(8,145,178,0.2);
+ }
+
+ .btn {
+ padding: 9px 18px;
+ border-radius: 9px;
+ border: none;
+ font-weight: 700;
+ font-size: 0.84rem;
+ font-family: 'Manrope', sans-serif;
+ cursor: pointer;
+ transition: 0.2s;
+ }
+
+ .btn-primary { background: var(--primary); color: white; }
+ .btn-primary:hover { background: #1d4ed8; }
+ .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--dark3); }
+ .btn-outline:hover { background: var(--light); }
+ .btn-disabled { background: var(--light); color: #94a3b8; cursor: not-allowed; }
+
+ .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+ .export-status { font-size: 0.8rem; color: var(--muted); min-height: 18px; }
+
+ .export-charts {
+ display: grid;
+ grid-template-columns: 1fr 1fr 1fr;
+ gap: 13px;
+ }
+
+ .export-chart-card {
+ background: var(--light);
+ border-radius: 10px;
+ border: 1px solid var(--border);
+ padding: 14px;
+ }
+
+ /* Лог валидации */
+ .log-table {
+ width: 100%;
+ border-collapse: collapse;
+ font-size: 0.78rem;
+ }
+
+ .log-table th {
+ background: var(--light);
+ padding: 8px 10px;
+ text-align: left;
+ }
+
+ .log-table td {
+ padding: 7px 10px;
+ border-bottom: 1px solid var(--border);
+ }
+
+ .badge-err { background: #fee2e2; color: #991b1b; padding: 2px 7px; border-radius: 5px; font-size: 0.7rem; font-weight: 700; }
+ .badge-ok { background: #dcfce7; color: #166534; padding: 2px 7px; border-radius: 5px; font-size: 0.7rem; font-weight: 700; }
+
+ /* Загрузка */
+ #loading-overlay {
+ position: fixed; inset: 0;
+ background: rgba(15,23,42,0.6);
+ display: flex; align-items: center; justify-content: center;
+ z-index: 500;
+ display: none;
+ }
+
+ .spinner {
+ width: 36px; height: 36px;
+ border: 3px solid rgba(255,255,255,0.1);
+ border-top-color: var(--primary);
+ border-radius: 50%;
+ animation: spin 0.8s linear infinite;
+ }
+
+ @keyframes spin { to { transform: rotate(360deg); } }
+         .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:14px 22px;}
+        .summary-card{background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.07);}
+        .rank-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+        .rank-row:last-child{border-bottom:none;}
+        .rank-num{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:#94a3b8;width:24px;}
+        .rank-name{font-size:0.82rem;font-weight:600;}
+        .rank-sub{font-size:0.7rem;color:var(--muted);margin-top:2px;}
+        .rank-bar-wrap{width:100px;height:8px;background:var(--light);border-radius:4px;overflow:hidden;}
+        .rank-bar{height:100%;border-radius:4px;}
+        .rank-pct{font-size:0.78rem;font-weight:700;width:40px;text-align:right;font-family:'JetBrains Mono',monospace;}
+        .top-hour-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem;}
+        .top-hour-row:last-child{border-bottom:none;}
+        .btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+        .btn-danger:hover{background:#fecaca;}
+        .filter-bar{display:flex;gap:10px;align-items:center;padding:12px 22px 0;flex-wrap:wrap;}
+        .filter-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);white-space:nowrap;}
+        .filter-select{padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--white);font-size:0.82rem;font-family:'Manrope',sans-serif;color:var(--dark);cursor:pointer;outline:none;transition:border-color 0.15s;}
+        .filter-select:focus{border-color:var(--primary);}
+        .filter-reset{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;font-size:0.78rem;font-weight:700;font-family:'Manrope',sans-serif;color:var(--muted);cursor:pointer;transition:0.15s;}
+        .filter-reset:hover{background:var(--light);color:var(--dark);}
+        .filter-result{font-size:0.75rem;color:var(--muted);margin-left:auto;}
+</style></head><body>
+
+<!-- ══════════════════════════════════════════
+ ЭКРАН ВХОДА
+══════════════════════════════════════════ --><div id="login-screen">
+ <div class="login-box">
+ <div class="login-logo">
+ ПВЗ-Контроль
+ <span>v2.0</span>
+ </div>
+ <div class="login-sub">Система управления пунктами выдачи заказов</div>
+
+ <div class="login-label">Логин</div>
+ <input class="login-input" type="text" id="login-username" placeholder="Введите логин" autocomplete="username">
+
+ <div class="login-label">Пароль</div>
+ <input class="login-input" type="password" id="login-password" placeholder="Введите пароль" autocomplete="current-password">
+
+ <button class="login-btn" onclick="doLogin()">Войти</button>
+ <div class="login-error" id="login-error"></div>
+
+ <!-- Подсказки для демо -->
+ <div class="login-hint">
+ <div class="login-hint-title">Демо-доступы (нажмите чтобы заполнить)</div>
+ <div class="hint-row">
+ <span class="hint-role">Оператор ВДНХ</span>
+ <span class="hint-cred" onclick="fillLogin('operator_vdnh','pass123')">operator_vdnh / pass123</span>
+ </div>
+ <div class="hint-row">
+ <span class="hint-role">Оператор Первомайская</span>
+ <span class="hint-cred" onclick="fillLogin('operator_pervom','pass123')">operator_pervom / pass123</span>
+ </div>
+ <div class="hint-row">
+ <span class="hint-role">Оператор Крылатское</span>
+ <span class="hint-cred" onclick="fillLogin('operator_kryl','pass123')">operator_kryl / pass123</span>
+ </div>
+ <div class="hint-row">
+ <span class="hint-role">Супервайзер</span>
+ <span class="hint-cred" onclick="fillLogin('supervisor1','pass456')">supervisor1 / pass456</span>
+ </div>
+ <div class="hint-row">
+ <span class="hint-role">Аналитик</span>
+ <span class="hint-cred" onclick="fillLogin('analyst1','pass789')">analyst1 / pass789</span>
+ </div>
+ </div>
+ </div></div>
+
+
+<!-- ══════════════════════════════════════════
+ ЗАГРУЗКА
+══════════════════════════════════════════ --><div id="loading-overlay">
+ <div class="spinner"></div></div>
+
+
+<!-- ══════════════════════════════════════════
+ ОСНОВНОЙ ДАШБОРД
+══════════════════════════════════════════ --><div id="app">
+
+ <!-- Сайдбар -->
+ <aside>
+ <div class="aside-top">
+ <div class="aside-logo">ПВЗ-Контроль</div>
+ <div class="status-dot" title="Сервер онлайн"></div>
+ </div>
+
+ <!-- Карточка текущего пользователя -->
+ <div class="user-card">
+ <div class="user-name" id="ui-user-name">—</div>
+ <div class="role-badge" id="ui-role-badge">—</div>
+ <div class="user-scope" id="ui-user-scope">—</div>
+ <button class="logout-btn" onclick="doLogout()">Выйти из системы</button>
+ </div>
+
+ <div class="pvz-section-label">Пункты выдачи</div>
+ <div id="pvz-list"></div>
+
+ <div class="aside-footer" id="aside-footer">—</div>
+ </aside>
+
+ <!-- Основной контент -->
+ <main>
+ <header>
+ <div>
+ <div class="header-title" id="header-pvz">Аналитика ПВЗ</div>
+ <div class="header-sub" id="header-addr">Выберите ПВЗ слева</div>
+ </div>
+ <div class="tabs">
+ <button class="tab-btn active" id="tab-stats" onclick="switchTab('stats')">Аналитика</button>
+ <button class="tab-btn" id="tab-log" onclick="switchTab('log')">Журнал</button>
+ <button class="tab-btn" id="tab-summary" onclick="switchTab('summary')" style="display:none">Сводка</button>
+ <button class="tab-btn" id="tab-export" onclick="switchTab('export')">Экспорт CSV</button>
+ </div>
+ </header>
+
+ <!-- ─── ТАБ: АНАЛИТИКА ─── -->
+ <div class="tab-panel active" id="panel-stats">
+
+ <div class="filter-bar">
+  <span class="filter-label">Фильтры:</span>
+  <select class="filter-select" id="filter-date" onchange="applyFilters()">
+   <option value="">Все даты</option>
+  </select>
+  <select class="filter-select" id="filter-type" onchange="applyFilters()">
+   <option value="">Все типы</option>
+   <option value="Выдача">Выдача</option>
+   <option value="Прием">Прием</option>
+   <option value="Возврат">Возврат</option>
+  </select>
+  <button class="filter-reset" onclick="resetFilters()">Сбросить</button>
+  <span class="filter-result" id="filter-result"></span>
+ </div>
+
+ <div class="stats-grid">
+ <div class="stat-card">
+ <div class="stat-label">Всего операций</div>
+ <div class="stat-val" id="kpi-total">—</div>
+ <div class="stat-hint">по выбранному ПВЗ</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Перегруженных часов</div>
+ <div class="stat-val" id="kpi-crit" style="color:var(--danger)">—</div>
+ <div class="stat-hint">интервалов с load ≥ 100%</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Доля перегрузок</div>
+ <div class="stat-val" id="kpi-share">—</div>
+ <div class="stat-hint">от рабочих часов</div>
+ </div>
+ <div class="stat-card">
+ <div class="stat-label">Валидация данных</div>
+ <div class="stat-val" id="kpi-valid" style="color:var(--success)">—</div>
+ <div class="stat-hint" id="kpi-valid-hint">записей</div>
+ </div>
+ </div>
+
+ <div class="content-section">
+ <div class="card">
+ <div class="card-title">Тепловая карта загрузки по часам</div>
+ <div class="table-scroll">
+ <table id="heat-table"></table>
+ </div>
+ </div>
+ </div>
+
+ <div class="charts-grid">
+ <div class="chart-card">
+ <div class="chart-title">Загрузка по часам (текущий ПВЗ)</div>
+ <div class="chart-wrap"><canvas id="chart-hourly"></canvas></div>
+ </div>
+ <div class="chart-card">
+ <div class="chart-title">Типы операций</div>
+ <div class="chart-wrap"><canvas id="chart-types"></canvas></div>
+ </div>
+ </div>
+ </div>
+
+ <!-- ─── ТАБ: ЖУРНАЛ ВАЛИДАЦИИ ─── -->
+ <div class="tab-panel" id="panel-log">
+ <div class="content-section">
+ <div class="card">
+ <div class="card-title">Журнал проблемных записей</div>
+ <div id="log-content">—</div>
+ </div>
+ </div>
+ </div>
+
+ <!-- ─── ТАБ: СВОДКА (только аналитик) ─── -->
+ <div class="tab-panel" id="panel-summary">
+  <div class="summary-grid">
+   <div class="summary-card">
+    <div class="card-title">Рейтинг ПВЗ по максимальной загрузке</div>
+    <div id="summary-ranking"></div>
+   </div>
+   <div class="summary-card">
+    <div class="card-title">Топ-5 перегруженных часов (все ПВЗ)</div>
+    <div id="summary-tophours"></div>
+   </div>
+   <div class="summary-card">
+    <div class="card-title">Средняя загрузка по ПВЗ</div>
+    <div class="chart-wrap"><canvas id="chart-avg-load"></canvas></div>
+   </div>
+   <div class="summary-card">
+    <div class="card-title">Структура операций по ПВЗ</div>
+    <div class="chart-wrap"><canvas id="chart-ops-structure"></canvas></div>
+   </div>
+  </div>
+  <div class="content-section">
+   <div class="card">
+    <div class="card-title">Экспорт проблемных записей — только аналитик</div>
+    <div style="color:var(--muted);font-size:0.84rem;margin-bottom:14px;">Выгрузка всех записей отклонённых валидацией.</div>
+    <div class="btn-row"><button class="btn btn-danger" onclick="exportErrors()">Скачать CSV ошибок</button></div>
+    <div class="export-status" id="error-export-status" style="margin-top:10px;"></div>
+   </div>
+  </div>
+  <div class="content-section">
+   <div class="card">
+    <div class="card-title">Обновление данных из 1С</div>
+    <div style="color:var(--muted);font-size:0.84rem;margin-bottom:14px;">
+     Загружает актуальные данные из 1С через интеграцию. Требует запущенного ngrok на сервере с 1С.
+    </div>
+    <div class="btn-row">
+     <button class="btn btn-primary" onclick="refreshFromOnec()" id="refresh-btn">Обновить данные из 1С</button>
+    </div>
+    <div class="export-status" id="refresh-status" style="margin-top:10px;"></div>
+   </div>
+  </div>
+ </div>
+
+ <!-- ─── ТАБ: ЭКСПОРТ ─── -->
+ <div class="tab-panel" id="panel-export">
+ <div class="export-section">
+ <div class="export-card">
+
+ <div>
+ <h3 style="margin:0 0 5px;">Экспорт отчёта «Загрузка ПВЗ»</h3>
+ <div style="color:var(--muted);font-size:0.86rem;">
+ Формат: <b>pvz_id; address; date; hour; ops; capacity; load</b>
+ </div>
+ </div>
+
+ <div id="access-banner-export"></div>
+
+ <div class="export-info">
+ <div class="export-info-title">Данные с сервера</div>
+ <div class="export-info-row">Всего операций: <b id="exp-total">—</b></div>
+ <div class="export-info-row">Уникальных ПВЗ: <b id="exp-pvz-count">—</b></div>
+ <div class="export-info-row">Дата: <b id="exp-date">—</b></div>
+ </div>
+
+ <div class="btn-row" id="export-btn-row"></div>
+ <div class="export-status" id="export-status"></div>
+
+ <div class="export-charts">
+ <div class="export-chart-card">
+ <div class="chart-title">Операций по ПВЗ</div>
+ <div class="chart-wrap"><canvas id="chart-pvz-ops"></canvas></div>
+ </div>
+ <div class="export-chart-card">
+ <div class="chart-title">Макс. загрузка по ПВЗ</div>
+ <div class="chart-wrap"><canvas id="chart-pvz-load"></canvas></div>
+ </div>
+ <div class="export-chart-card">
+ <div class="chart-title">Типы операций (все ПВЗ)</div>
+ <div class="chart-wrap"><canvas id="chart-all-types"></canvas></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ </main></div>
+
+
+<script>// ══════════════════════════════════════════════════════
+// КОНФИГУРАЦИЯ
+// ══════════════════════════════════════════════════════
+const API_BASE = '';
+const VALID_TYPES = new Set(['Выдача', 'Прием', 'Возврат']);
+
+// ══════════════════════════════════════════════════════
+// СОСТОЯНИЕ
+// ══════════════════════════════════════════════════════
+let token = null;
+let currentUser = null; // { sub, role, name, pvz, region }
+let allData = [];
+let errorLog = [];
+let aggAll = {};
+let pvzNames = [];
+let allHours = [];
+let selectedPvz = null;
+let filterDate = '';
+let filterType = '';
+
+let chartHourly = null;
+let chartTypes = null;
+let chartPvzOps = null;
+let chartPvzLoad = null;
+let chartAllTypes = null;
+
+
+// ══════════════════════════════════════════════════════
+// АВТОРИЗАЦИЯ
+// ══════════════════════════════════════════════════════
+function fillLogin(u, p) {
+ document.getElementById('login-username').value = u;
+ document.getElementById('login-password').value = p;
+}
+
+async function doLogin() {
+ const username = document.getElementById('login-username').value.trim();
+ const password = document.getElementById('login-password').value.trim();
+ const errEl = document.getElementById('login-error');
+ errEl.textContent = '';
+
+ if (!username || !password) {
+ errEl.textContent = 'Введите логин и пароль';
+ return;
+ }
+
+ try {
+ const resp = await fetch(`${API_BASE}/login`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ username, password })
+ });
+
+ if (!resp.ok) {
+ errEl.textContent = 'Неверный логин или пароль';
+ return;
+ }
+
+ const data = await resp.json();
+ token = data.token;
+
+ // Декодируем payload токена (base64)
+ const payload = JSON.parse(atob(token.split('.')[1]));
+ currentUser = payload;
+
+ document.getElementById('login-screen').style.display = 'none';
+ document.getElementById('app').classList.add('visible');
+
+ renderUserCard();
+ setupTabs();
+ loadData();
+
+ } catch(e) {
+ errEl.textContent = 'Ошибка подключения к серверу (FastAPI запущен?)';
+ }
+}
+
+// Enter в полях логина
+document.getElementById('login-password').addEventListener('keydown', e =>{
+ if (e.key === 'Enter') doLogin();
+});
+document.getElementById('login-username').addEventListener('keydown', e =>{
+ if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+ token = null;
+ currentUser = null;
+ allData = []; errorLog = []; aggAll = {};
+ pvzNames = []; allHours = []; selectedPvz = null;
+
+ document.getElementById('app').classList.remove('visible');
+ document.getElementById('login-screen').style.display = 'flex';
+ document.getElementById('login-error').textContent = '';
+ document.getElementById('login-username').value = '';
+ document.getElementById('login-password').value = '';
+}
+
+
+// ══════════════════════════════════════════════════════
+// КАРТОЧКА ПОЛЬЗОВАТЕЛЯ
+// ══════════════════════════════════════════════════════
+const ROLE_LABELS = {
+ operator: ' Оператор ПВЗ',
+ supervisor: 'Супервайзер',
+ analyst: 'Аналитик'
+};
+
+const ROLE_SCOPE = {
+ operator: u =>`Точка: ${u.pvz || '—'}`,
+ supervisor: u =>`Регион: ${u.region || '—'} · Все ПВЗ региона`,
+ analyst: u =>'Полный доступ ко всем ПВЗ и выгрузкам'
+};
+
+function renderUserCard() {
+ document.getElementById('ui-user-name').textContent = currentUser.name || currentUser.sub;
+ const badge = document.getElementById('ui-role-badge');
+ badge.textContent = ROLE_LABELS[currentUser.role] || currentUser.role;
+ badge.className = `role-badge ${currentUser.role}`;
+ document.getElementById('ui-user-scope').textContent = ROLE_SCOPE[currentUser.role]?.(currentUser) || '';
+}
+
+function setupTabs() {
+ document.getElementById('tab-summary').style.display = currentUser.role === 'analyst' ? 'inline-block' : 'none';
+}
+
+
+// ══════════════════════════════════════════════════════
+// ЗАГРУЗКА ДАННЫХ
+// ══════════════════════════════════════════════════════
+async function loadData() {
+ showLoading(true);
+ try {
+ const resp = await fetch(`${API_BASE}/data`, {
+ headers: { 'Authorization': `Bearer ${token}` }
+ });
+
+ if (resp.status === 401) { doLogout(); return; }
+ if (!resp.ok) throw new Error('Ошибка сервера');
+
+ const raw = await resp.json();
+ processData(raw);
+ } catch(e) {
+ document.getElementById('header-pvz').textContent = 'Ошибка загрузки данных';
+ document.getElementById('header-addr').textContent = e.message;
+ } finally {
+ showLoading(false);
+ }
+}
+
+function showLoading(v) {
+ document.getElementById('loading-overlay').style.display = v ? 'flex' : 'none';
+}
+
+
+// ══════════════════════════════════════════════════════
+// ВАЛИДАЦИЯ
+// ══════════════════════════════════════════════════════
+function validateRecord(item) {
+ const errors = [];
+
+ if (!item.pvz || String(item.pvz).trim() === '')
+ errors.push({ rule: 'pvz', label: 'ПВЗ пустой', text: 'Поле pvz отсутствует' });
+
+ if (!VALID_TYPES.has(String(item.type || '').trim()))
+ errors.push({ rule: 'type', label: 'Тип операции', text: `Недопустимый тип "${item.type}"` });
+
+ const timeStr = String(item.op_time || '').trim();
+ const tm = timeStr.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
+ if (!tm) {
+ errors.push({ rule: 'fmt', label: 'Формат времени', text: `op_time "${item.op_time}" некорректен` });
+ } else {
+ const h = parseInt(tm[1]), m = parseInt(tm[2]), s = parseInt(tm[3] || '0');
+ if (h < 9 || h >21)
+ errors.push({ rule: 'time', label: 'Рабочие часы', text: `Операция в ${timeStr} вне 09:00–21:59` });
+ if (m >59 || s >59)
+ errors.push({ rule: 'fmt', label: 'Время', text: `Минуты/секунды вне диапазона` });
+ }
+
+ const cap = Number(item.capacity);
+ if (!Number.isFinite(cap) || cap <= 0 || !Number.isInteger(cap))
+ errors.push({ rule: 'cap', label: 'Capacity', text: `capacity="${item.capacity}" должно быть целым >0` });
+
+ if (!item.number || String(item.number).trim() === '')
+ errors.push({ rule: 'num', label: 'Номер', text: 'Номер документа пустой' });
+
+ return errors;
+}
+
+
+// ══════════════════════════════════════════════════════
+// ОБРАБОТКА ДАННЫХ
+// ══════════════════════════════════════════════════════
+function processData(raw) {
+ allData = []; errorLog = []; aggAll = {};
+
+ raw.forEach((item, idx) =>{
+ const errs = validateRecord(item);
+ if (errs.length) {
+ errorLog.push({ item, errs, idx: idx + 1 });
+ return;
+ }
+
+ allData.push(item);
+ });
+
+ pvzNames = [...new Set(allData.map(i =>i.pvz))].sort();
+ allHours = [...new Set(allData.map(i =>String(i.op_time).split(':')[0].padStart(2,'0')))].sort();
+
+ // Строим aggAll с усреднением по дням
+ aggAll = buildAggFromData(allData);
+
+ pvzNames = [...new Set(allData.map(i =>i.pvz))].sort();
+ allHours = [...new Set(allData.map(i =>String(i.op_time).split(':')[0].padStart(2,'0')))].sort();
+
+ const dates = [...new Set(allData.map(i => i.doc_date))].sort();
+ const dateSelect = document.getElementById('filter-date');
+ dateSelect.innerHTML = '<option value="">Все даты</option>';
+ dates.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; dateSelect.appendChild(o); });
+
+ buildSidebar();
+ updateValidationCard();
+ updateExportInfo();
+ renderExportCharts();
+ renderLogTab();
+ renderExportButtons();
+
+ if (currentUser.role === 'analyst') renderSummaryTab();
+
+ // Для оператора — сразу выбрать свой ПВЗ
+ if (currentUser.role === 'operator' && pvzNames.length >0) {
+ selectPvz(pvzNames[0]);
+ } else if (pvzNames.length >0) {
+ selectPvz(pvzNames[0]);
+ }
+
+ const dateStr = allData[0]?.doc_date || '';
+ document.getElementById('aside-footer').textContent =
+ `Данные: ${dateStr} · ${allData.length} оп.`;
+}
+
+
+// ══════════════════════════════════════════════════════
+// САЙДБАР
+// ══════════════════════════════════════════════════════
+function buildSidebar() {
+ const list = document.getElementById('pvz-list');
+ list.innerHTML = '';
+
+ if (pvzNames.length === 0) {
+ list.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:0.78rem;">Нет доступных ПВЗ</div>';
+ return;
+ }
+
+ pvzNames.forEach(pvz =>{
+ const cells = Object.values(aggAll).filter(c =>c.pvzName === pvz);
+ const maxLoad = cells.length ? Math.max(...cells.map(c =>c.count / c.capacity * 100)) : 0;
+ const cls = maxLoad >= 100 ? 'red' : maxLoad >= 70 ? 'yellow' : 'green';
+ const shortName = pvz.replace('г. Москва, ', '').replace(/\(.*?\)/, '').trim();
+
+ const el = document.createElement('div');
+ el.className = 'nav-item';
+ el.dataset.pvz = pvz;
+ el.innerHTML = `
+ <div class="nav-item-info">
+ <div class="nav-item-name">${shortName}</div>
+ <div class="nav-item-sub">${pvz.match(/\(.*?\)/)?.[0] || ''}</div>
+ </div>
+ <div class="load-badge ${cls}">${Math.round(maxLoad)}%</div>`;
+ el.onclick = () =>selectPvz(pvz);
+ list.appendChild(el);
+ });
+}
+
+function selectPvz(pvz) {
+ selectedPvz = pvz;
+ document.querySelectorAll('.nav-item').forEach(el =>{
+ el.classList.toggle('active', el.dataset.pvz === pvz);
+ });
+
+ const shortName = pvz.replace('г. Москва, ', '');
+ document.getElementById('header-pvz').textContent = shortName;
+ document.getElementById('header-addr').textContent = pvz;
+
+ renderHeatMap(pvz);
+ renderPvzCharts(pvz);
+ updateKpi(pvz);
+ renderLogTab();
+}
+
+
+// ══════════════════════════════════════════════════════
+// KPI
+// ══════════════════════════════════════════════════════
+function updateKpi(pvz) {
+ const pvzData = allData.filter(i => i.pvz === pvz);
+ const cells = Object.values(aggAll).filter(c => c.pvzName === pvz);
+ const crit = cells.filter(c => c.count / c.capacity >= 1).length;
+
+ document.getElementById('kpi-total').textContent = pvzData.length;
+ document.getElementById('kpi-crit').textContent = crit;
+ document.getElementById('kpi-share').textContent = cells.length
+     ? Math.round(crit / cells.length * 100) + '%' : '—';
+
+ updateValidationCard(pvz);
+}
+
+function updateValidationCard(pvz) {
+ const valEl  = document.getElementById('kpi-valid');
+ const hintEl = document.getElementById('kpi-valid-hint');
+
+ if (pvz) {
+     // Статистика только по выбранному ПВЗ
+     const pvzValid  = allData.filter(i => i.pvz === pvz).length;
+     const pvzErrors = errorLog.filter(e => e.item.pvz === pvz).length;
+     const pvzTotal  = pvzValid + pvzErrors;
+     valEl.textContent = `${pvzValid} / ${pvzTotal}`;
+     if (pvzErrors === 0) {
+         valEl.style.color  = 'var(--success)';
+         hintEl.textContent = 'все корректны';
+     } else {
+         valEl.style.color  = 'var(--warning)';
+         hintEl.textContent = `отклонено: ${pvzErrors}`;
+     }
+ } else {
+     // Глобальная статистика (при первичной загрузке)
+     const total = allData.length + errorLog.length;
+     valEl.textContent = `${allData.length} / ${total}`;
+     if (errorLog.length === 0) {
+         valEl.style.color  = 'var(--success)';
+         hintEl.textContent = 'все корректны';
+     } else {
+         valEl.style.color  = 'var(--warning)';
+         hintEl.textContent = `отклонено: ${errorLog.length}`;
+     }
+ }
+}
+
+
+// ══════════════════════════════════════════════════════
+// ТЕПЛОВАЯ КАРТА
+// ══════════════════════════════════════════════════════
+function renderHeatMap(pvz) {
+ const table = document.getElementById('heat-table');
+ const cells = Object.values(aggAll).filter(c =>c.pvzName === pvz);
+ const hours = [...new Set(cells.map(c =>c.hour))].sort();
+
+ if (!hours.length) { table.innerHTML = '<tr><td>Нет данных</td></tr>'; return; }
+
+ let html = '<thead><tr><th>ПВЗ</th>';
+ hours.forEach(h =>{ html += `<th>${h}:00</th>`; });
+ html += '</tr></thead><tbody><tr>';
+
+ const shortName = pvz.replace('г. Москва, ул. ', '').replace(/\(.*?\)/, '').trim();
+ html += `<td class="pvz-cell" title="${pvz}">${shortName}</td>`;
+
+ hours.forEach(h =>{
+ const c = aggAll[`${pvz}|${h}`];
+ const pct = c ? Math.round(c.count / c.capacity * 100) : 0;
+ const cls = pct >= 100 ? 'lvl-high' : pct >= 70 ? 'lvl-mid' : 'lvl-low';
+ const tip = c
+ ? `${h}:00 — ${c.count} оп. / ${c.capacity} лимит = ${pct}%`
+ : `${h}:00 — нет операций`;
+ html += `<td><div class="heat-cell ${cls}" title="${tip}">
+ <div class="heat-time">${h}:00</div>
+ <div class="heat-pct">${pct}%</div>
+ </div></td>`;
+ });
+
+ html += '</tr></tbody>';
+ table.innerHTML = html;
+}
+
+
+// ══════════════════════════════════════════════════════
+// ДИАГРАММЫ ПВЗ
+// ══════════════════════════════════════════════════════
+function renderPvzCharts(pvz) {
+ const cells = Object.values(aggAll).filter(c =>c.pvzName === pvz).sort((a,b) =>a.hour.localeCompare(b.hour));
+ const labels = cells.map(c =>`${c.hour}:00`);
+ const loads = cells.map(c =>Math.round(c.count / c.capacity * 100));
+ const colors = loads.map(p =>p >= 100 ? '#fca5a5' : p >= 70 ? '#fde68a' : '#86efac');
+
+ if (chartHourly) chartHourly.destroy();
+ chartHourly = new Chart(document.getElementById('chart-hourly'), {
+ type: 'bar',
+ data: {
+ labels,
+ datasets: [{
+ label: 'Загрузка %',
+ data: loads,
+ backgroundColor: colors,
+ borderRadius: 5
+ }, {
+ label: 'Лимит (100%)',
+ data: labels.map(() =>100),
+ type: 'line',
+ borderColor: '#ef4444',
+ borderDash: [4,4],
+ borderWidth: 2,
+ pointRadius: 0,
+ fill: false
+ }]
+ },
+ options: {
+ responsive: true, maintainAspectRatio: false,
+ plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+ scales: {
+ y: { beginAtZero: true, ticks: { callback: v =>v + '%', font: { size: 10 } } },
+ x: { ticks: { font: { size: 10 } } }
+ }
+ }
+ });
+
+ const pvzData = allData.filter(i =>i.pvz === pvz);
+ const counts = { 'Выдача': 0, 'Прием': 0, 'Возврат': 0 };
+ pvzData.forEach(i =>{ if (counts[i.type] !== undefined) counts[i.type]++; });
+
+ if (chartTypes) chartTypes.destroy();
+ chartTypes = new Chart(document.getElementById('chart-types'), {
+ type: 'doughnut',
+ data: {
+ labels: Object.keys(counts),
+ datasets: [{
+ data: Object.values(counts),
+ backgroundColor: ['#93c5fd', '#86efac', '#fca5a5'],
+ borderColor: ['#2563eb', '#22c55e', '#ef4444'],
+ borderWidth: 2, hoverOffset: 6
+ }]
+ },
+ options: {
+ responsive: true, maintainAspectRatio: false,
+ plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } }
+ }
+ });
+}
+
+
+// ══════════════════════════════════════════════════════
+// ДИАГРАММЫ ЭКСПОРТА
+// ══════════════════════════════════════════════════════
+function renderExportCharts() {
+ const short = pvzNames.map(p =>p.replace('г. Москва, ул. ', '').replace(/\(.*?\)/, '').trim());
+
+ const opsByPvz = pvzNames.map(p =>allData.filter(i =>i.pvz === p).length);
+ if (chartPvzOps) chartPvzOps.destroy();
+ chartPvzOps = new Chart(document.getElementById('chart-pvz-ops'), {
+ type: 'bar',
+ data: { labels: short, datasets: [{ label: 'Операций', data: opsByPvz, backgroundColor: '#93c5fd', borderColor: '#2563eb', borderWidth: 2, borderRadius: 5 }] },
+ options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 9 } } } } }
+ });
+
+ const maxLoad = pvzNames.map(p =>{
+ const cells = Object.values(aggAll).filter(c =>c.pvzName === p);
+ return cells.length ? Math.max(...cells.map(c =>Math.round(c.count / c.capacity * 100))) : 0;
+ });
+ const lbg = maxLoad.map(p =>p >= 100 ? '#fca5a5' : p >= 70 ? '#fde68a' : '#86efac');
+ const lbd = maxLoad.map(p =>p >= 100 ? '#ef4444' : p >= 70 ? '#f59e0b' : '#22c55e');
+
+ if (chartPvzLoad) chartPvzLoad.destroy();
+ chartPvzLoad = new Chart(document.getElementById('chart-pvz-load'), {
+ type: 'bar',
+ data: { labels: short, datasets: [{ label: 'Макс. загрузка %', data: maxLoad, backgroundColor: lbg, borderColor: lbd, borderWidth: 2, borderRadius: 5 }] },
+ options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx =>` ${ctx.parsed.x}%` } } }, scales: { x: { beginAtZero: true, max: 130, ticks: { font: { size: 10 } } }, y: { ticks: { font: { size: 9 } } } } }
+ });
+
+ const allCounts = { 'Выдача': 0, 'Прием': 0, 'Возврат': 0 };
+ allData.forEach(i =>{ if (allCounts[i.type] !== undefined) allCounts[i.type]++; });
+ if (chartAllTypes) chartAllTypes.destroy();
+ chartAllTypes = new Chart(document.getElementById('chart-all-types'), {
+ type: 'pie',
+ data: { labels: Object.keys(allCounts), datasets: [{ data: Object.values(allCounts), backgroundColor: ['#93c5fd', '#86efac', '#fca5a5'], borderColor: ['#2563eb', '#22c55e', '#ef4444'], borderWidth: 2, hoverOffset: 6 }] },
+ options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } } }
+ });
+}
+
+
+// ══════════════════════════════════════════════════════
+// ЖУРНАЛ ВАЛИДАЦИИ
+// ══════════════════════════════════════════════════════
+function renderLogTab() {
+ const el = document.getElementById('log-content');
+
+ // Фильтруем по выбранному ПВЗ (если выбран)
+ const filtered = selectedPvz
+     ? errorLog.filter(e => e.item.pvz === selectedPvz)
+     : errorLog;
+
+ if (!filtered.length) {
+     const msg = selectedPvz
+         ? 'Все записи по этому ПВЗ прошли валидацию — проблем не обнаружено'
+         : 'Все записи прошли валидацию — проблем не обнаружено';
+     el.innerHTML = `<div style="color:var(--success);padding:16px 0;">${msg}</div>`;
+     return;
+ }
+
+ const pvzLabel = selectedPvz ? ` по ПВЗ «${selectedPvz.replace('г. Москва, ', '')}»` : '';
+ let html = `<div style="margin-bottom:12px;color:var(--muted);font-size:0.82rem;">Найдено проблемных записей${pvzLabel}: <b style="color:var(--danger)">${filtered.length}</b></div>`;
+ html += '<table class="log-table"><thead><tr><th>#</th><th>Документ</th><th>ПВЗ</th><th>Время</th><th>Ошибки</th></tr></thead><tbody>';
+
+ filtered.forEach(({ item, errs, idx }) => {
+     const errText = errs.map(e => `<span class="badge-err">${e.label}</span>`).join(' ');
+     html += `<tr>
+     <td style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.72rem">${idx}</td>
+     <td style="font-family:'JetBrains Mono',monospace;font-size:0.75rem">${item.number || '—'}</td>
+     <td style="font-size:0.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.pvz || '—'}</td>
+     <td style="font-family:'JetBrains Mono',monospace;font-size:0.75rem">${item.op_time || '—'}</td>
+     <td>${errText}</td>
+     </tr>`;
+ });
+
+ html += '</tbody></table>';
+ el.innerHTML = html;
+}
+
+
+// ══════════════════════════════════════════════════════
+// ЭКСПОРТ — кнопки по ролям
+// ══════════════════════════════════════════════════════
+function renderExportButtons() {
+ const banner = document.getElementById('access-banner-export');
+ const row = document.getElementById('export-btn-row');
+
+ if (currentUser.role === 'operator') {
+ banner.innerHTML = `<div class="access-banner">
+ Оператор · Доступен экспорт только по своему ПВЗ
+ </div>`;
+ row.innerHTML = `
+ <button class="btn btn-primary" onclick="exportCSV('selected')">Скачать CSV — мой ПВЗ</button>
+ <button class="btn btn-outline" onclick="exportOverloadReport()">Скачать отчёт о перегрузках</button>
+ <button class="btn btn-outline" onclick="switchTab('stats')">← Вернуться</button>`;
+
+ } else if (currentUser.role === 'supervisor') {
+ banner.innerHTML = `<div class="access-banner supervisor">
+ Супервайзер · Экспорт по всем ПВЗ региона
+ </div>`;
+ row.innerHTML = `
+ <button class="btn btn-primary" onclick="exportCSV('all')">Скачать CSV — все ПВЗ региона</button>
+ <button class="btn btn-outline" onclick="exportCSV('selected')">Только выбранный ПВЗ</button>
+ <button class="btn btn-outline" onclick="exportOverloadReport()">Скачать отчёт о перегрузках</button>
+ <button class="btn btn-outline" onclick="switchTab('stats')">← Вернуться</button>`;
+
+ } else {
+ // Аналитик — полный доступ
+ banner.innerHTML = '';
+ row.innerHTML = `
+ <button class="btn btn-primary" onclick="exportCSV('all')">Скачать CSV — все ПВЗ</button>
+ <button class="btn btn-outline" onclick="exportCSV('selected')">Только выбранный ПВЗ</button>
+ <button class="btn btn-outline" onclick="exportOverloadReport()">Скачать отчёт о перегрузках</button>
+ <button class="btn btn-outline" onclick="switchTab('stats')">← Вернуться</button>`;
+ }
+}
+
+
+// ══════════════════════════════════════════════════════
+// ЭКСПОРТ CSV
+// ══════════════════════════════════════════════════════
+function exportCSV(mode) {
+ if (!allData.length) { alert('Данные не загружены'); return; }
+
+ const pvzIndex = {};
+ pvzNames.forEach((p, i) =>{ pvzIndex[p] = `PVZ-${i+1}`; });
+
+ const target = mode === 'selected' ? selectedPvz : null;
+ const rows = Object.values(aggAll)
+ .filter(c =>!target || c.pvzName === target)
+ .sort((a, b) =>a.pvzName.localeCompare(b.pvzName) || a.hour.localeCompare(b.hour));
+
+ let csv = 'pvz_id;address;date;hour;ops;capacity;load\n';
+ rows.forEach(r =>{
+ const date = allData.find(i =>i.pvz === r.pvzName)?.doc_date || '';
+ const load = (r.count / r.capacity * 100).toFixed(1);
+ csv += `${pvzIndex[r.pvzName]};"${r.pvzName}";${date};${r.hour}:00;${r.count};${r.capacity};${load}%\n`;
+ });
+
+ const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+ const a = document.createElement('a');
+ const dateStr = (allData[0]?.doc_date || 'export').replace(/\./g, '-');
+ a.href = URL.createObjectURL(blob);
+ a.download = `pvz_load_${dateStr}_${mode}.csv`;
+ a.click();
+
+ document.getElementById('export-status').textContent =
+ ` Скачан: ${a.download} (${rows.length} строк)`;
+}
+
+
+// ══════════════════════════════════════════════════════
+// ИНФО ДЛЯ ЭКСПОРТА
+// ══════════════════════════════════════════════════════
+function updateExportInfo() {
+ document.getElementById('exp-total').textContent = allData.length;
+ document.getElementById('exp-pvz-count').textContent = pvzNames.length;
+ document.getElementById('exp-date').textContent = allData[0]?.doc_date || '—';
+}
+
+
+// ══════════════════════════════════════════════════════
+// ТАБЫ
+// ══════════════════════════════════════════════════════
+function renderSummaryTab() {
+ let chartAvgLoad = null, chartOpsStr = null;
+
+ const ranking = pvzNames.map(pvz => {
+  const cells = Object.values(aggAll).filter(c => c.pvzName === pvz);
+  const maxLoad = cells.length ? Math.max(...cells.map(c => Math.round(c.count / c.capacity * 100))) : 0;
+  const avgLoad = cells.length ? Math.round(cells.reduce((s, c) => s + c.count / c.capacity * 100, 0) / cells.length) : 0;
+  return { pvz, maxLoad, avgLoad };
+ }).sort((a, b) => b.maxLoad - a.maxLoad);
+
+ document.getElementById('summary-ranking').innerHTML = ranking.map((r, i) => {
+  const short = r.pvz.replace('г. Москва, ул. ', '').replace(/\(.*?\)/, '').trim();
+  const color = r.maxLoad >= 100 ? '#ef4444' : r.maxLoad >= 70 ? '#f59e0b' : '#22c55e';
+  return `<div class="rank-row">
+   <div class="rank-num">${i + 1}</div>
+   <div style="flex:1"><div class="rank-name">${short}</div><div class="rank-sub">Средняя: ${r.avgLoad}%</div></div>
+   <div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.min(r.maxLoad,100)}%;background:${color}"></div></div>
+   <div class="rank-pct" style="color:${color}">${r.maxLoad}%</div>
+  </div>`;
+ }).join('');
+
+ const topCells = Object.values(aggAll)
+  .map(c => ({ label: `${c.pvzName.replace('г. Москва, ул. ', '').replace(/\(.*?\)/, '').trim()} ${c.hour}:00`, pct: Math.round(c.count / c.capacity * 100), count: c.count, cap: c.capacity }))
+  .filter(c => c.pct >= 100).sort((a, b) => b.pct - a.pct).slice(0, 5);
+
+ document.getElementById('summary-tophours').innerHTML = topCells.length
+  ? topCells.map(c => `<div class="top-hour-row"><div><div style="font-weight:600">${c.label}</div><div style="font-size:0.7rem;color:var(--muted)">${c.count} оп. при лимите ${c.cap}</div></div><div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#ef4444">${c.pct}%</div></div>`).join('')
+  : '<div style="color:var(--success);padding:16px 0;">Перегрузок нет</div>';
+
+ const avgLabels = pvzNames.map(p => p.replace('г. Москва, ул. ', '').replace(/\(.*?\)/, '').trim());
+ const avgData = pvzNames.map(pvz => { const c = Object.values(aggAll).filter(x => x.pvzName === pvz); return c.length ? Math.round(c.reduce((s, x) => s + x.count / x.capacity * 100, 0) / c.length) : 0; });
+
+ if (chartAvgLoad) chartAvgLoad.destroy();
+ chartAvgLoad = new Chart(document.getElementById('chart-avg-load'), {
+  type: 'bar',
+  data: { labels: avgLabels, datasets: [{ label: 'Средняя %', data: avgData, backgroundColor: avgData.map(p => p >= 100 ? '#fca5a5' : p >= 70 ? '#fde68a' : '#86efac'), borderRadius: 6 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: { size: 10 } } }, x: { ticks: { font: { size: 9 } } } } }
+ });
+
+ const inD = pvzNames.map(p => allData.filter(i => i.pvz === p && i.type === 'Прием').length);
+ const outD = pvzNames.map(p => allData.filter(i => i.pvz === p && i.type === 'Выдача').length);
+ const retD = pvzNames.map(p => allData.filter(i => i.pvz === p && i.type === 'Возврат').length);
+
+ if (chartOpsStr) chartOpsStr.destroy();
+ chartOpsStr = new Chart(document.getElementById('chart-ops-structure'), {
+  type: 'bar',
+  data: { labels: avgLabels, datasets: [{ label: 'Приём', data: inD, backgroundColor: '#86efac', borderRadius: 4 }, { label: 'Выдача', data: outD, backgroundColor: '#93c5fd', borderRadius: 4 }, { label: 'Возврат', data: retD, backgroundColor: '#fca5a5', borderRadius: 4 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } }, scales: { x: { stacked: true, ticks: { font: { size: 9 } } }, y: { stacked: true, ticks: { font: { size: 10 } } } } }
+ });
+}
+
+function exportErrors() {
+ if (!errorLog.length) { document.getElementById('error-export-status').textContent = 'Ошибочных записей нет'; return; }
+ let csv = 'idx;number;pvz;op_time;type;capacity;errors\n';
+ errorLog.forEach(({ item, errs, idx }) => { csv += `${idx};"${item.number || ''}";"${item.pvz || ''}";"${item.op_time || ''}";"${item.type || ''}";"${item.capacity || ''}";"${errs.map(e => e.label).join(' | ')}"\n`; });
+ const a = document.createElement('a');
+ a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+ a.download = `pvz_errors_${(allData[0]?.doc_date || 'export').replace(/\./g, '-')}.csv`;
+ a.click();
+ document.getElementById('error-export-status').textContent = `Скачан: ${a.download} (${errorLog.length} строк)`;
+}
+
+async function refreshFromOnec() {
+ const btn    = document.getElementById('refresh-btn');
+ const status = document.getElementById('refresh-status');
+
+ btn.disabled    = true;
+ btn.textContent = 'Загрузка...';
+ status.textContent = '';
+ status.style.color = 'var(--muted)';
+
+ try {
+  const resp = await fetch(`${API_BASE}/refresh`, {
+   method:  'POST',
+   headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  const data = await resp.json();
+
+  if (!resp.ok) {
+   status.style.color = 'var(--danger)';
+   status.textContent = 'Ошибка: ' + (data.detail || 'неизвестная ошибка');
+   return;
+  }
+
+  status.style.color  = 'var(--success)';
+  status.textContent  = `Данные обновлены: ${data.records} записей (${new Date(data.updated_at).toLocaleTimeString('ru-RU')})`;
+
+  // Перезагружаем данные на странице
+  await loadData();
+
+ } catch(e) {
+  status.style.color = 'var(--danger)';
+  status.textContent = 'Ошибка соединения с сервером';
+ } finally {
+  btn.disabled    = false;
+  btn.textContent = 'Обновить данные из 1С';
+ }
+}
+
+function getFilteredData(pvz) {
+ return allData.filter(i => {
+  if (pvz && i.pvz !== pvz) return false;
+  if (filterDate && i.doc_date !== filterDate) return false;
+  if (filterType && i.type !== filterType) return false;
+  return true;
+ });
+}
+
+function buildAggFromData(data) {
+ // Считаем сырые суммы и количество уникальных дней на каждый ключ
+ const raw = {};
+ const daysPerKey = {};
+
+ data.forEach(item => {
+  const hour = String(item.op_time).split(':')[0].padStart(2, '0');
+  const key  = `${item.pvz}|${hour}`;
+  const dayKey = `${key}|${item.doc_date}`;
+
+  if (!raw[key]) raw[key] = { pvzName: item.pvz, hour, count: 0, capacity: item.capacity };
+  raw[key].count++;
+
+  if (!daysPerKey[key]) daysPerKey[key] = new Set();
+  daysPerKey[key].add(item.doc_date);
+ });
+
+ // Делим на количество уникальных дней чтобы получить среднее за день
+ const agg = {};
+ Object.keys(raw).forEach(key => {
+  const days = daysPerKey[key].size;
+  agg[key] = {
+   pvzName:  raw[key].pvzName,
+   hour:     raw[key].hour,
+   count:    Math.round(raw[key].count / days),
+   capacity: raw[key].capacity
+  };
+ });
+
+ return agg;
+}
+
+function applyFilters() {
+ filterDate = document.getElementById('filter-date').value;
+ filterType = document.getElementById('filter-type').value;
+ if (!selectedPvz) return;
+
+ const filtered = getFilteredData(selectedPvz);
+ const filteredAgg = buildAggFromData(filtered);
+
+ const hint = [];
+ if (filterDate) hint.push(filterDate);
+ if (filterType) hint.push(filterType);
+ document.getElementById('filter-result').textContent =
+  hint.length ? `Показано: ${filtered.length} оп. (${hint.join(', ')})` : '';
+
+ renderHeatMapFromAgg(selectedPvz, filteredAgg);
+ renderPvzChartsFromData(selectedPvz, filtered, filteredAgg);
+
+ const cells = Object.values(filteredAgg).filter(c => c.pvzName === selectedPvz);
+ const crit = cells.filter(c => c.count / c.capacity >= 1).length;
+ document.getElementById('kpi-total').textContent = filtered.length;
+ document.getElementById('kpi-crit').textContent = crit;
+ document.getElementById('kpi-share').textContent = cells.length
+  ? Math.round(crit / cells.length * 100) + '%' : '—';
+}
+
+function resetFilters() {
+ filterDate = '';
+ filterType = '';
+ document.getElementById('filter-date').value = '';
+ document.getElementById('filter-type').value = '';
+ document.getElementById('filter-result').textContent = '';
+ if (selectedPvz) {
+  renderHeatMap(selectedPvz);
+  renderPvzCharts(selectedPvz);
+  updateKpi(selectedPvz);
+ }
+}
+
+function renderHeatMapFromAgg(pvz, agg) {
+ const table = document.getElementById('heat-table');
+ const cells = Object.values(agg).filter(c => c.pvzName === pvz);
+ const hours = [...new Set(cells.map(c => c.hour))].sort();
+ if (!hours.length) { table.innerHTML = '<tr><td style="padding:16px;color:var(--muted)">Нет данных по выбранным фильтрам</td></tr>'; return; }
+ let html = '<thead><tr><th>ПВЗ</th>';
+ hours.forEach(h => { html += `<th>${h}:00</th>`; });
+ html += '</tr></thead><tbody><tr>';
+ html += `<td class="pvz-cell" title="${pvz}">${pvz.replace('г. Москва, ул. ', '').replace(/\(.*?\)/, '').trim()}</td>`;
+ hours.forEach(h => {
+  const c = agg[`${pvz}|${h}`];
+  const pct = c ? Math.round(c.count / c.capacity * 100) : 0;
+  const cls = pct >= 100 ? 'lvl-high' : pct >= 70 ? 'lvl-mid' : 'lvl-low';
+  html += `<td><div class="heat-cell ${cls}" title="${h}:00 — ${c ? c.count : 0} оп. = ${pct}%"><div class="heat-time">${h}:00</div><div class="heat-pct">${pct}%</div></div></td>`;
+ });
+ html += '</tr></tbody>';
+ table.innerHTML = html;
+}
+
+function renderPvzChartsFromData(pvz, data, agg) {
+ const cells = Object.values(agg).filter(c => c.pvzName === pvz).sort((a, b) => a.hour.localeCompare(b.hour));
+ const labels = cells.map(c => `${c.hour}:00`);
+ const loads = cells.map(c => Math.round(c.count / c.capacity * 100));
+ const colors = loads.map(p => p >= 100 ? '#fca5a5' : p >= 70 ? '#fde68a' : '#86efac');
+ if (chartHourly) chartHourly.destroy();
+ chartHourly = new Chart(document.getElementById('chart-hourly'), {
+  type: 'bar',
+  data: { labels, datasets: [
+   { label: 'Загрузка %', data: loads, backgroundColor: colors, borderRadius: 5 },
+   { label: 'Лимит (100%)', data: labels.map(() => 100), type: 'line', borderColor: '#ef4444', borderDash: [4,4], borderWidth: 2, pointRadius: 0, fill: false }
+  ]},
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => v + '%', font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } } }
+ });
+ const counts = { 'Выдача': 0, 'Прием': 0, 'Возврат': 0 };
+ data.forEach(i => { if (counts[i.type] !== undefined) counts[i.type]++; });
+ if (chartTypes) chartTypes.destroy();
+ chartTypes = new Chart(document.getElementById('chart-types'), {
+  type: 'doughnut',
+  data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#93c5fd', '#86efac', '#fca5a5'], borderColor: ['#2563eb', '#22c55e', '#ef4444'], borderWidth: 2, hoverOffset: 6 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } } }
+ });
+}
+
+function exportOverloadReport() {
+ // Собираем все перегруженные интервалы по доступным ПВЗ
+ const overloads = Object.values(aggAll)
+  .filter(c => c.count / c.capacity >= 1)
+  .sort((a, b) => a.pvzName.localeCompare(b.pvzName) || a.hour.localeCompare(b.hour));
+
+ if (!overloads.length) {
+  document.getElementById('export-status').textContent = 'Перегруженных интервалов не обнаружено.';
+  return;
+ }
+
+ const date = allData[0]?.doc_date || '—';
+ let text = 'ОТЧЁТ О ПЕРЕГРУЗКАХ ПУНКТОВ ВЫДАЧИ ЗАКАЗОВ\n';
+ text += '='.repeat(60) + '\n';
+ text += `Дата формирования отчёта: ${date}\n`;
+ text += `Всего перегруженных интервалов: ${overloads.length}\n`;
+ text += '='.repeat(60) + '\n\n';
+
+ overloads.forEach((c, i) => {
+  const pct  = Math.round(c.count / c.capacity * 100);
+  const hEnd = String(parseInt(c.hour) + 1).padStart(2, '0');
+  text += `Запись ${i + 1}\n`;
+  text += '-'.repeat(40) + '\n';
+  text += `По результатам анализа загрузки ПВЗ выявлен перегруженный интервал.\n\n`;
+  text += `ПВЗ: ${c.pvzName}\n`;
+  text += `Дата: ${date}\n`;
+  text += `Время: ${c.hour}:00–${hEnd}:00\n`;
+  text += `Пропускная способность: ${c.capacity} операций в час\n`;
+  text += `Фактическая нагрузка: ${c.count} операций в час\n`;
+  text += `Загрузка: ${pct}%\n\n`;
+  text += `В указанный период нагрузка превысила допустимую пропускную способность ПВЗ. `;
+  text += `Возможны очереди, увеличение времени ожидания клиентов и снижение качества обслуживания.\n\n`;
+  text += `Рекомендация: принять меры по снижению нагрузки: перераспределить поток заказов, `;
+  text += `усилить смену сотрудниками или скорректировать график обработки операций.\n\n`;
+ });
+
+ const blob = new Blob(['\uFEFF' + text], { type: 'text/plain;charset=utf-8' });
+ const a = document.createElement('a');
+ a.href = URL.createObjectURL(blob);
+ a.download = `pvz_overload_report_${(date).replace(/\./g, '-')}.txt`;
+ a.click();
+ document.getElementById('export-status').textContent =
+  `Скачан отчёт: ${a.download} (${overloads.length} перегруженных интервалов)`;
+}
+
+function switchTab(tab) {
+ ['stats', 'log', 'summary', 'export'].forEach(t => {
+  document.getElementById('tab-' + t)?.classList.toggle('active', t === tab);
+  document.getElementById('panel-' + t)?.classList.toggle('active', t === tab);
+ });
+}
+</script></body></html>
